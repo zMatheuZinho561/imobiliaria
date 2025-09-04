@@ -176,6 +176,10 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                 <i class="fas fa-building w-5 text-center"></i>
                 <span class="font-medium">Imóveis</span>
             </a>
+             <a href="solicitacao.php" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-white/20">
+                <i class="fas fa-file-alt w-5 text-center"></i>
+                <span class="font-medium">Solicitações</span>
+            </a>
             <a href="contatos.php" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-white/20">
                 <i class="fas fa-envelope w-5 text-center"></i>
                 <span class="font-medium">Contatos</span>

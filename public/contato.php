@@ -1165,66 +1165,47 @@
         }
 
         // Submissão do formulário
+    // Submissão do formulário
         async function submitForm(e) {
             e.preventDefault();
             
             showLoadingOverlay(true);
             
             try {
-                // Simular envio (aqui você integraria com sua API)
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Coletar dados do formulário
+                // Preparar dados do formulário
                 const formData = new FormData(e.target);
+                
+                // Adicionar finalidades como array
                 const purposes = Array.from(document.querySelectorAll('input[name="purpose"]:checked'))
                     .map(cb => cb.value);
                 
-                const submissionData = {
-                    id: Date.now(),
-                    timestamp: new Date().toLocaleString('pt-BR'),
-                    status: 'pending',
-                    ownerName: formData.get('ownerName'),
-                    ownerPhone: formData.get('ownerPhone'),
-                    ownerEmail: formData.get('ownerEmail'),
-                    ownerCpf: formData.get('ownerCpf'),
-                    cep: formData.get('cep'),
-                    state: formData.get('state'),
-                    city: formData.get('city'),
-                    neighborhood: formData.get('neighborhood'),
-                    street: formData.get('street'),
-                    number: formData.get('number'),
-                    complement: formData.get('complement'),
-                    buildingName: formData.get('buildingName'),
-                    propertyType: formData.get('propertyType'),
-                    propertyStatus: formData.get('propertyStatus'),
-                    purposes: purposes,
-                    saleValue: formData.get('saleValue'),
-                    rentValue: formData.get('rentValue'),
-                    bedrooms: formData.get('bedrooms'),
-                    suites: formData.get('suites'),
-                    bathrooms: formData.get('bathrooms'),
-                    parkingSpaces: formData.get('parkingSpaces'),
-                    totalArea: formData.get('totalArea'),
-                    privateArea: formData.get('privateArea'),
-                    condoFee: formData.get('condoFee'),
-                    iptu: formData.get('iptu'),
-                    description: formData.get('description')
-                };
+                // Remover finalidades antigas do FormData e adicionar as novas
+                formData.delete('purpose');
+                purposes.forEach(purpose => {
+                    formData.append('purpose[]', purpose);
+                });
 
-                // Salvar no localStorage para o painel admin
-                const existingSubmissions = JSON.parse(localStorage.getItem('propertySubmissions') || '[]');
-                existingSubmissions.push(submissionData);
-                localStorage.setItem('propertySubmissions', JSON.stringify(existingSubmissions));
+                // Enviar para o backend
+                const response = await fetch('process_solicitacao.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Erro ao enviar solicitação');
+                }
                 
-                showSuccessPage(submissionData.id);
+                showSuccessPage(result.solicitacao_id);
                 
             } catch (error) {
-                showAlert('error', 'Erro ao enviar solicitação. Tente novamente.');
+                console.error('Erro:', error);
+                showAlert('error', error.message || 'Erro ao enviar solicitação. Tente novamente.');
             } finally {
                 showLoadingOverlay(false);
             }
         }
-
         // Página de sucesso
         function showSuccessPage(submissionId) {
             document.querySelector('.form-container').innerHTML = `
