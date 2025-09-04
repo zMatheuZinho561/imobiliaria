@@ -62,7 +62,7 @@ $stmt->execute($params);
 $imoveis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Busca tipos únicos para o filtro
-$stmt_tipos = $pdo->query("SELECT DISTINCT tipo FROM imoveis ORDER BY tipo");
+$stmt_tipos = $pdo->query("SELECT DISTINCT tipo FROM imoveis WHERE tipo IS NOT NULL ORDER BY tipo");
 $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
@@ -99,7 +99,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
     <script>
         function confirmarExclusao(id, titulo) {
             if (confirm(`Tem certeza que deseja excluir o imóvel "${titulo}"?\n\nEsta ação não pode ser desfeita.`)) {
-                window.location.href = `delet_imovel.php?id=${id}`;
+                window.location.href = `delete_imovel.php?id=${id}`;
             }
         }
 
@@ -142,9 +142,16 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
 
         function alterarStatus(id, novoStatus) {
             if (confirm(`Confirma alterar o status para "${novoStatus}"?`)) {
-                // Aqui você implementaria a lógica para alterar o status
-                // Por exemplo, fazer uma requisição AJAX
-                window.location.href = `alterar_status.php?id=${id}&status=${novoStatus}`;
+                // Criar formulário para enviar dados
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'alterar_status_imovel.php';
+                form.innerHTML = `
+                    <input type="hidden" name="id" value="${id}">
+                    <input type="hidden" name="status" value="${novoStatus}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
             }
         }
     </script>
@@ -176,7 +183,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                 <i class="fas fa-building w-5 text-center"></i>
                 <span class="font-medium">Imóveis</span>
             </a>
-             <a href="solicitacao.php" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-white/20">
+            <a href="solicitacao.php" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-white/20">
                 <i class="fas fa-file-alt w-5 text-center"></i>
                 <span class="font-medium">Solicitações</span>
             </a>
@@ -373,7 +380,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                         <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover-lift border border-white/20">
                             <!-- Imagem -->
                             <div class="relative overflow-hidden h-48">
-                                <?php if ($imovel['imagem']): ?>
+                                <?php if (!empty($imovel['imagem'])): ?>
                                     <img src="uploads/<?= htmlspecialchars($imovel['imagem']) ?>" 
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                          onerror="this.parentElement.innerHTML='<div class=\'w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center\'><i class=\'fas fa-image text-4xl text-gray-400\'></i></div>'">
@@ -399,7 +406,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                                 </div>
                                 
                                 <!-- Visualizações -->
-                                <?php if ($imovel['visualizacoes'] > 0): ?>
+                                <?php if (!empty($imovel['visualizacoes']) && $imovel['visualizacoes'] > 0): ?>
                                     <div class="absolute top-3 left-3">
                                         <span class="bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm flex items-center gap-1">
                                             <i class="fas fa-eye"></i>
@@ -417,7 +424,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                                 
                                 <div class="flex items-center text-gray-600 mb-3">
                                     <i class="fas fa-map-marker-alt mr-2 text-indigo-500"></i>
-                                    <span class="text-sm truncate"><?= htmlspecialchars($imovel['localizacao']) ?></span>
+                                    <span class="text-sm truncate"><?= htmlspecialchars($imovel['localizacao'] ?? $imovel['endereco'] ?? 'Endereço não informado') ?></span>
                                 </div>
                                 
                                 <p class="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">
@@ -428,22 +435,22 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                                 <div class="grid grid-cols-4 gap-2 mb-6 text-xs">
                                     <div class="text-center bg-gray-50 rounded-lg py-2">
                                         <i class="fas fa-expand-arrows-alt text-gray-500 mb-1"></i>
-                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['area']) ?></div>
+                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['area'] ?? $imovel['area_total'] ?? '0') ?></div>
                                         <div class="text-gray-500">m²</div>
                                     </div>
                                     <div class="text-center bg-gray-50 rounded-lg py-2">
                                         <i class="fas fa-bed text-gray-500 mb-1"></i>
-                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['quartos']) ?></div>
+                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['quartos'] ?? '0') ?></div>
                                         <div class="text-gray-500">quartos</div>
                                     </div>
                                     <div class="text-center bg-gray-50 rounded-lg py-2">
                                         <i class="fas fa-bath text-gray-500 mb-1"></i>
-                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['banheiros']) ?></div>
+                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['banheiros'] ?? '0') ?></div>
                                         <div class="text-gray-500">banh.</div>
                                     </div>
                                     <div class="text-center bg-gray-50 rounded-lg py-2">
                                         <i class="fas fa-car text-gray-500 mb-1"></i>
-                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['garagem']) ?></div>
+                                        <div class="font-semibold text-gray-800"><?= htmlspecialchars($imovel['garagem'] ?? $imovel['vagas'] ?? '0') ?></div>
                                         <div class="text-gray-500">vagas</div>
                                     </div>
                                 </div>
@@ -478,6 +485,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                     <table class="w-full">
                         <thead class="bg-gradient-to-r from-indigo-50 to-purple-50">
                             <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Imóvel</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tipo</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Preço</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
@@ -514,7 +522,7 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                                     <tr class="hover:bg-indigo-50/50 transition-colors">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center">
-                                                <?php if ($imovel['imagem']): ?>
+                                                <?php if (!empty($imovel['imagem'])): ?>
                                                     <img src="uploads/<?= htmlspecialchars($imovel['imagem']) ?>" 
                                                          class="w-20 h-16 object-cover rounded-xl mr-4 shadow-md"
                                                          onerror="this.parentElement.innerHTML='<div class=\'w-20 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl mr-4 flex items-center justify-center shadow-md\'><i class=\'fas fa-home text-gray-400\'></i></div><div class=\'min-w-0 flex-1\'>' + this.nextElementSibling.innerHTML + '</div>';">
@@ -527,16 +535,16 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                                                     <div class="font-semibold text-gray-900 truncate max-w-xs" title="<?= htmlspecialchars($imovel['titulo']) ?>">
                                                         <?= htmlspecialchars($imovel['titulo']) ?>
                                                     </div>
-                                                    <div class="text-sm text-gray-600 truncate max-w-xs flex items-center gap-1" title="<?= htmlspecialchars($imovel['localizacao']) ?>">
+                                                    <div class="text-sm text-gray-600 truncate max-w-xs flex items-center gap-1" title="<?= htmlspecialchars($imovel['localizacao'] ?? $imovel['endereco'] ?? '') ?>">
                                                         <i class="fas fa-map-marker-alt text-gray-400"></i>
-                                                        <?= htmlspecialchars($imovel['localizacao']) ?>
+                                                        <?= htmlspecialchars($imovel['localizacao'] ?? $imovel['endereco'] ?? 'Endereço não informado') ?>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4">
                                             <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                <?= ucfirst(htmlspecialchars($imovel['tipo'])) ?>
+                                                <?= ucfirst(htmlspecialchars($imovel['tipo'] ?? 'N/A')) ?>
                                             </span>
                                         </td>
                                         <td class="px-6 py-4">
@@ -567,26 +575,26 @@ $tipos = $stmt_tipos->fetchAll(PDO::FETCH_COLUMN);
                                             <div class="flex flex-wrap gap-3">
                                                 <span class="flex items-center gap-1" title="Área">
                                                     <i class="fas fa-expand-arrows-alt text-gray-400"></i>
-                                                    <?= htmlspecialchars($imovel['area']) ?>m²
+                                                    <?= htmlspecialchars($imovel['area'] ?? $imovel['area_total'] ?? '0') ?>m²
                                                 </span>
                                                 <span class="flex items-center gap-1" title="Quartos">
                                                     <i class="fas fa-bed text-gray-400"></i>
-                                                    <?= htmlspecialchars($imovel['quartos']) ?>Q
+                                                    <?= htmlspecialchars($imovel['quartos'] ?? '0') ?>Q
                                                 </span>
                                                 <span class="flex items-center gap-1" title="Banheiros">
                                                     <i class="fas fa-bath text-gray-400"></i>
-                                                    <?= htmlspecialchars($imovel['banheiros']) ?>B
+                                                    <?= htmlspecialchars($imovel['banheiros'] ?? '0') ?>B
                                                 </span>
                                                 <span class="flex items-center gap-1" title="Garagem">
                                                     <i class="fas fa-car text-gray-400"></i>
-                                                    <?= htmlspecialchars($imovel['garagem']) ?>G
+                                                    <?= htmlspecialchars($imovel['garagem'] ?? $imovel['vagas'] ?? '0') ?>G
                                                 </span>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-1 text-gray-600">
                                                 <i class="fas fa-eye text-gray-400"></i>
-                                                <span class="font-semibold"><?= $imovel['visualizacoes'] ?></span>
+                                                <span class="font-semibold"><?= $imovel['visualizacoes'] ?? 0 ?></span>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4">
